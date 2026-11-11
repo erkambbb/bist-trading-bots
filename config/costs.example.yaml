@@ -1,0 +1,82 @@
+# Türkiye işlem maliyetleri (Kasım 2026). Oranlar ondalık kesirdir (0.0001 = %0,01).
+# "verify: true" olan kalemler canlıya geçmeden önce kurumdan teyit edilecek.
+
+taxes:
+  bsmv_on_commission: 0.05
+  bsmv_on_fx_purchase: 0.002          # verify: true
+  bist_equity_capital_gains: 0.0      # GVK geçici 67
+  bist_dividend_withholding: 0.15
+  fund_withholding_default: 0.175     # PPF bireysel için verify: true
+  foreign_equity:
+    declared: true
+    progressive_rates: [0.15, 0.20, 0.27, 0.35, 0.40]
+    indexation_threshold_ufe: 0.10    # Yİ-ÜFE artışı >= %10 ise maliyet endekslenir
+    assumed_marginal_rate: 0.27       # kişiye göre değiştirin
+  crypto:
+    transaction_tax: 0.0              # 2026 tasarısı (0.0003) geri çekildi; senaryo için 0.0003
+    gains_withholding: 0.0
+
+bist:
+  exchange_fee: 0.000025              # borsa payı, yüzbinde 2,5
+  clearing_fee: 0.000004              # Takasbank, milyonda 4
+  mkk_per_record_try: 0.1103
+  cancel_fee_bps:                     # kurumun yansıtıp yansıtmadığı kuruma bağlı
+    at_price_0_5s: 0.75
+    at_price_6_10s: 0.45
+    at_price_11s_plus: 0.30
+    outside_price: 0.12
+  otr_limit: 5                        # emir/işlem oranı
+  otr_penalty_try: 0.50
+  tick_table:                         # [alt sınır, adım]
+    - [0.01, 0.01]
+    - [20.00, 0.02]
+    - [50.00, 0.05]
+    - [100.00, 0.10]
+
+scenarios:
+  S0_midas_app:
+    commission: 0.0
+    exchange_fees_paid_by_broker: true
+    automation: false
+  S1_midas_matriks_api:
+    commission: 0.0001
+    exchange_fees_paid_by_broker: true   # verify: true
+    automation: true
+  S2_api_broker_negotiated:
+    commission: 0.0002
+    exchange_fees_paid_by_broker: false
+    automation: true
+  S3_api_broker_standard:
+    commission: 0.0009                    # borsa payı dahil (GCM örneği)
+    exchange_fees_paid_by_broker: true
+    automation: true
+
+implicit_costs:                       # gidiş-dönüş, adım cinsinden
+  stop_entry_slippage_ticks: 1.0
+  marketable_exit_slippage_ticks: 0.5
+  half_spread_ticks: 0.5
+  roundtrip_assumption:
+    optimistic: 0.0008
+    base: 0.0015
+
+midas_foreign:
+  us_commission_usd: 1.5
+  eu_commission_eur: 1.5
+  fx_spread_per_conversion: 0.0025    # verify: true, işlem dökümünden ölçülecek
+  min_position_usd: 1500
+
+midas_crypto:
+  commission_tiers_try:               # [aylık hacim alt sınırı, oran]
+    - [0, 0.0015]
+    - [10000000, 0.0012]
+    - [100000000, 0.0010]
+
+fixed_monthly_try:
+  matriks_iq_data: 1900               # verify: true (Midas kullanıcısı için)
+  matriks_iq_algo: 2250               # verify: true
+  vps: 750
+  llm_api_usd: 25
+
+benchmarks:
+  tcmb_policy_rate: 0.36              # 22.10.2026
+  ppf_net_annual_assumption: 0.285    # backtestte gerçek TEFAS serisi kullanılır

@@ -1,0 +1,126 @@
+# Günlük Bot (BIST100 gün içi) varsayılan parametreleri. Ayrıntı: docs/03-gunluk-bot.md
+# Yorumdaki [a, b, c] listeleri backtest ızgarasıdır.
+
+mode: paper                     # paper | live
+broker: matriks_iq              # matriks_iq | algolab | paper
+cost_scenario: S1_midas_matriks_api
+
+session:
+  timezone: Europe/Istanbul
+  opening_auction: ["09:40", "10:00"]
+  continuous: ["10:00", "18:00"]
+  prep_time: "07:30"
+  entry_cutoff: "16:00"
+  cancel_pending_entries: "17:25"
+  close_window_start_offset_min: 30   # seans sonu - 30 dk  -> 17:30
+  close_deadline_offset_min: 5        # seans sonu - 5 dk   -> 17:55
+  report_time: "18:15"
+
+universe:
+  index: XU100
+  exclude_vbts: [brut_takas, tek_fiyat, emir_paketi]
+  max_tick_to_price: 0.0008
+  min_adv20_try: 300_000_000
+  atr_pct_range: [0.02, 0.07]
+  exclude_corporate_action_days: true
+
+regime:
+  index_ema: 20
+  cautious_if:
+    vix_above: 25
+    spx_futures_premarket_below: -0.01
+  off_if:
+    cds_5y_daily_change_bp_above: 25
+    xu100_open_gap_below: -0.03
+  intraday_index_vwap_filter: true
+  rs_vs_index_if_below_vwap: 0.015
+  blackout:
+    tcmb_ppk: ["13:45", "14:30"]
+    us_macro_minutes: 10
+    tuik_cpi_day_opening_range: ["10:15", "10:30"]
+
+selection:
+  opening_range_minutes: 5          # [5, 15]
+  rvol_lookback_days: 14
+  rvol_threshold: 2.0               # [1.5, 2.0, 3.0]
+  score_weights:
+    news_flag: 0.3                  # [0, 0.3, 0.6]
+    gap_norm: 0.2                   # [0, 0.2, 0.4]
+  require_bullish_or_candle: true
+  require_above_vwap: true
+  max_gap_atr_without_news: 2.0
+  max_candidates:
+    normal: 4                       # [2, 3, 4]
+    cautious: 2
+
+strategy_orb:
+  enabled: true
+  entry: stop_limit
+  trigger_offset_ticks: 1
+  limit_offset_ticks: 2
+  entry_valid_until: "12:00"        # ["11:00", "12:00", "14:00"]
+  stop:
+    k_atr: 0.35                     # [0.25, 0.35, 0.50, structural]
+    min_cost_multiple: 6.7
+    min_ticks: 4
+    max_pct: 0.02
+  take_profit:
+    mode: partial_then_trail        # [partial_then_trail, trail_only, eod_only]
+    tp1_r: 2.0
+    tp1_fraction: 0.5
+    move_stop_to_breakeven: true
+  trailing:
+    atr_5m_period: 14
+    atr_multiple: 2.0
+    exit_on_5m_close_below_vwap: true
+  max_entries_per_symbol: 2
+  reentry_cooldown_min: 30
+
+strategy_vwap_pullback:
+  enabled: true                     # [true, false]
+  window: ["11:00", "16:00"]
+  min_minutes_above_vwap: 60
+  min_rs_vs_index: 0.01
+  pullback_volume_ratio_max: 1.0
+  stop: swing_low_minus_1_tick
+
+risk:
+  gross_exposure_cap: 0.80          # kullanıcı kuralı K3
+  risk_per_trade: 0.005
+  risk_per_trade_cautious: 0.0025
+  max_position_pct: 0.20
+  liquidity_fraction_adv: 0.005
+  daily_loss_limit: -0.015
+  daily_profit_lock: 0.025
+  weekly_loss_limit: -0.04
+  monthly_loss_limit: -0.08
+  max_consecutive_losing_days: 5
+  no_entry_if_intraday_move_above: 0.07
+  no_entry_if_within_of_price_limit: 0.03
+
+close_protocol:
+  weak_position_exit_at_open_of_window: true
+  momentum_hold:
+    enabled: true                   # [true, false]
+    require_profit: true
+    require_above_vwap: true
+    require_index_first_half_hour_positive: true
+    require_index_17_00_17_30_positive: true
+    tighten_trailing_atr: 1.0
+  final_exit_time_offset_min: 10    # seans sonu - 10 dk -> 17:50
+  aggressive_exit_time_offset_min: 7  # 17:53
+  us_open_guard: true               # kış saatinde 17:25–17:40
+
+orders:
+  max_amend_per_minute: 1
+  target_order_to_trade_ratio: 3
+  partial_fill_timeout_sec: 300
+  client_side_stops: true
+  broker_side_backup_stops: true    # destek teyit edilecek
+
+ops:
+  stale_data_no_entry_sec: 10
+  stale_data_flatten_sec: 60
+  max_order_rejects_per_day: 3
+  watchdog_flatten_time: "17:35"
+  telegram_alerts: true

@@ -1,0 +1,129 @@
+# Orta Vade Bot varsayılan parametreleri. Ayrıntı: docs/04-orta-vade-bot.md
+# Yorumdaki [a, b, c] listeleri backtest ızgarasıdır.
+
+mode: paper                       # paper | live
+execution: manual_ticket          # manual_ticket (Telegram -> Midas) | matriks_iq | ibkr
+base_currency: TRY
+
+schedule:
+  weekly_scoring: "FRI 19:00"
+  daily_monitor: ["08:30", "18:30"]
+  bist_execution: closing_auction   # 18:00–18:05 emir toplama
+  us_execution_delay_after_open_min: 30
+  allocation_transition_weeks: 3
+
+sleeves:
+  bist:    {min: 0.20, max: 0.80}
+  foreign: {min: 0.10, max: 0.40, default: 0.20}
+  crypto:  {min: 0.00, max: 0.10}   # kullanıcı kuralı O5, sert tavan
+  cash:    {min: 0.00, max: 0.60, vehicle_try: PPF, vehicle_usd: midas_usd_nema}
+  gold:    {enabled: false, max: 0.10}
+
+regime_bist:
+  sma_long: 200
+  breadth_sma: 50
+  breadth_threshold: 0.50
+  weights_by_score: [0.20, 0.35, 0.50, 0.65, 0.75]   # R = 0..4
+  relative_value_haircut: 0.10      # E/P(XU100) < net PPF ise
+  accelerate_if_index_drawdown: 0.05
+
+regime_foreign:
+  spx_above_sma200_weight: 0.25
+  spx_below_sma200_weight: 0.10
+  fx_hedge_bonus: 0.05
+
+universe_bist:
+  base: [XU100]
+  add_bist_all_if_adv20_try_above: 50_000_000
+  min_free_float: 0.15
+  exclude_vbts: true
+  blacklist_months_after_spk_sanction: 12
+
+factors:
+  winsorize_z: 3
+  sector_neutral: true
+  weights:                          # [eşit, varsayılan, momentum ağır, kalite ağır]
+    value: 0.20
+    quality: 0.25
+    momentum: 0.25
+    earnings_surprise: 0.15
+    analyst: 0.10                   # backtestte 0; ileri testte ölçülür
+    news: 0.05                      # backtestte 0; ileri testte ölçülür
+  momentum_windows: {long: [252, 21], mid: [126, 21]}
+  sue_metric: ebitda
+  sue_history_quarters: 8
+  pead_effect_days: 60
+  news_half_life_days: 10
+  analyst_shrinkage_n0: 20
+  analyst_revision_gamma: 0.1
+
+penalties:
+  rights_issue_6m: -0.5
+  net_fx_short_over_equity_30pct: -0.5
+  monetary_gain_share_of_net_income_50pct: -0.3
+  related_party_receivables_20pct: -0.3
+  main_shareholder_net_sell_3m: -0.3
+  vbts_more_than_2_in_6m: -0.3
+  qualified_audit_opinion: exclude
+
+valuation:
+  fair_value_weights: {multiples: 0.6, consensus: 0.4}
+  min_upside_to_buy: 0.15
+  trim_at_fv_fraction: 0.5
+  exit_at_fv_multiple: 1.15
+
+entry:
+  candidate_percentile: 0.20        # [0.10, 0.20, 0.30]
+  tranches:                         # [[0.4,0.3,0.3], [1.0], [0.33,0.33,0.34]]
+    - {name: T1, size: 0.40, max_rsi: 70, max_ext_over_sma50: 1.15}
+    - {name: T2, size: 0.30, pullback_atr: 1.0, rsi_max: 35, valid_weeks: 6, min_score_percentile: 0.30}
+    - {name: T3, size: 0.30, confirm: [close_above_sma20, sue_positive, score_top20_after_4w], valid_weeks: 10}
+  no_dip_buy_below_sma200: true
+  max_averaging_down_pct: -0.15
+
+exit:
+  catastrophe_stop: -0.15
+  trailing_weekly:
+    from_avg_cost_atr: 2.5
+    from_peak_atr: 3.0              # [2.5, 3.0, 4.0]
+  sell_percentile: 0.50             # [0.40, 0.50, 0.60]
+  review_week: 16
+  review_requires_beating_ppf: true
+
+sizing:
+  method: score_tilted_inverse_vol
+  vol_lookback_days: 60
+  max_single_bist: 0.10
+  max_single_foreign_stock: 0.07
+  max_single_broad_etf: 0.20
+  max_sector_bist: 0.25
+  bist_positions: [8, 15]
+  max_foreign_single_stocks: 8
+  portfolio_dd_half_risk: -0.20
+  portfolio_dd_to_cash: -0.25
+
+foreign:
+  core_min_share: 0.60
+  prefer_ucits_above_usd: 60000
+  min_position_usd: 1500
+  fx_rebalance_threshold: 0.05
+  tax_loss_harvest_month: 12
+
+crypto:
+  assets: {BTC: 0.70, ETH: 0.30}
+  trend_full_weight: 0.07
+  trend_half_weight: 0.04
+  sma_fast: 50
+  sma_slow: 200
+  rebalance_band: 0.02
+  hard_cap: 0.10
+  trim_to: 0.08
+  cost_basis_method: FIFO
+
+llm:
+  filter_model: small
+  analysis_model: large
+  prompt_caching: true
+  batch_for_quarterly_reports: true
+  numeric_crosscheck_tolerance: 0.05
+  ic_acceptance: {min_mean_ic: 0.03, min_t_stat: 2.0, horizons_days: [5, 20]}
