@@ -2,7 +2,7 @@
 
 Borsa İstanbul odaklı iki açık kaynak trading botunun **tasarım ve planlama** reposu.
 
-> **Durum:** Faz 0, yani sadece plan. Henüz kod yok. Sıradaki adım, son 2 yıllık backtest ile planın işe yarayıp yaramadığını ölçmek.
+> **Durum:** Faz 1–2 tamam: iki bot, backtest motorları, paper/canlı katman ve testler yazıldı. Backtest sonuçları [docs/07](docs/07-backtest-sonuclari.md)'de. Kurulum ve kullanım: [docs/08](docs/08-kurulum-ve-kullanim.md).
 >
 > **Yatırım tavsiyesi değildir.** Buradaki her şey eğitim ve araştırma amaçlıdır. Gerçek parayla kullanmadan önce kendi testlerinizi yapın.
 
@@ -26,6 +26,31 @@ Borsa İstanbul odaklı iki açık kaynak trading botunun **tasarım ve planlama
 5. [Orta Vade Bot: tam spesifikasyon](docs/04-orta-vade-bot.md)
 6. [Backtest planı (son 2 yıl)](docs/05-backtest-plani.md)
 7. [Yol haritası, riskler ve açık sorular](docs/06-yol-haritasi-ve-riskler.md)
+8. [Backtest sonuçları](docs/07-backtest-sonuclari.md)
+9. [Kurulum ve kullanım](docs/08-kurulum-ve-kullanim.md)
+
+## Hızlı başlangıç
+
+```bash
+python3 -m venv .venv && . .venv/bin/activate && pip install -e ".[data,live,dev]"
+python scripts/download_data.py      # veri (kendi bilgisayarınızda)
+python scripts/run_backtest.py       # iki bot, 500.000 TL, son 2 yıl
+```
+
+## Kod yapısı
+
+```
+src/bisttrader/
+├── costs.py            Türkiye maliyet modeli (fiyat adımı, komisyon, BSMV, kayma)
+├── daily/              Günlük Bot: signals (kurallar), engine (backtest), live (paper/canlı)
+├── midterm/            Orta Vade Bot: factors, engine (backtest), live (emir fişi planlayıcı)
+├── execution/          Broker arayüzü: paper, MatriksIQ TCP API
+├── nlp/llm.py          KAP/haber sınıflandırma, bilanço okuma (Claude API, önbellekli)
+├── data/               Parquet depo + sentetik veri
+├── metrics.py report.py backtest_runner.py cli.py
+scripts/                download_data.py, run_backtest.py
+tests/                  birim + uçtan uca testler
+```
 
 Parametrelerin varsayılan değerleri `config/` altında:
 

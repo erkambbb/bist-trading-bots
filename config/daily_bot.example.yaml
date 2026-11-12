@@ -2,6 +2,13 @@
 # Yorumdaki [a, b, c] listeleri backtest ızgarasıdır.
 
 mode: paper                     # paper | live
+data:
+  realtime_confirmed: false         # TradingView gerçek zamanlı BIST aboneliği doğrulanmadan canlı emir gönderilmez
+matriks:
+  host: 127.0.0.1
+  port: 18890
+  brokage_id: null                  # boşsa MatriksIQ'dan otomatik
+  account_id: null
 broker: matriks_iq              # matriks_iq | algolab | paper
 cost_scenario: S1_midas_matriks_api
 
@@ -25,6 +32,7 @@ universe:
   exclude_corporate_action_days: true
 
 regime:
+  enabled: true                     # [true, false]
   index_ema: 20
   cautious_if:
     vix_above: 25
@@ -124,3 +132,17 @@ ops:
   max_order_rejects_per_day: 3
   watchdog_flatten_time: "17:35"
   telegram_alerts: true
+
+backtest:
+  initial_equity: 500000
+  reserve_in_ppf: true              # kullanılmayan %20 PPF'de (net stopaj)
+  reserve_ppf_tax: 0.175
+  # Veri çözünürlüğüne göre zorunlu uyarlamalar (1 saatlik barda 5 dk açılış aralığı yok)
+  interval_overrides:
+    1h:
+      selection: {opening_range_minutes: 60}
+      strategy_orb: {entry_valid_until: "14:00"}
+      strategy_vwap_pullback: {enabled: false}
+    30m:
+      selection: {opening_range_minutes: 30}
+      strategy_vwap_pullback: {enabled: false}

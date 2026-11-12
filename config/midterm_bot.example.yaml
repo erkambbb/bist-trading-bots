@@ -20,6 +20,8 @@ sleeves:
   gold:    {enabled: false, max: 0.10}
 
 regime_bist:
+  enabled: true                     # [true, false]
+  fixed_weight: 0.60                # rejim kapalıyken sabit BIST ağırlığı
   sma_long: 200
   breadth_sma: 50
   breadth_threshold: 0.50
@@ -110,6 +112,8 @@ foreign:
   tax_loss_harvest_month: 12
 
 crypto:
+  trend_enabled: true               # [true, false]
+  fixed_weight: 0.05                # trend kapalıyken
   assets: {BTC: 0.70, ETH: 0.30}
   trend_full_weight: 0.07
   trend_half_weight: 0.04
@@ -121,9 +125,18 @@ crypto:
   cost_basis_method: FIFO
 
 llm:
+  enabled: false                    # canlıda KAP olaylarını LLM ile skorla (ANTHROPIC_API_KEY gerekir)
   filter_model: small
   analysis_model: large
+  filter_model_id: claude-haiku-5-5
+  analysis_model_id: claude-sonnet-5-5
   prompt_caching: true
   batch_for_quarterly_reports: true
   numeric_crosscheck_tolerance: 0.05
   ic_acceptance: {min_mean_ic: 0.03, min_t_stat: 2.0, horizons_days: [5, 20]}
+
+backtest:
+  initial_equity: 500000
+  calibration: ["2018-11-12", "2024-11-08"]
+  oos: ["2024-11-11", "2026-11-10"]
+  bist_implicit_per_side: 0.0005    # kapanış seansı, Midas komisyon %0
